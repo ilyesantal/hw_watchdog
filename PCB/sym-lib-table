@@ -1,0 +1,3 @@
+(sym_lib_table
+  (lib (name "hw_watchdog")(type "KiCad")(uri "${KIPRJMOD}/libraries/hw_watchdog.kicad_sym")(options "")(descr ""))
+)

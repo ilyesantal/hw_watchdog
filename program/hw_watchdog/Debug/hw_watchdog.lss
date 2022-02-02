@@ -1,0 +1,405 @@
+
+hw_watchdog.elf:     file format elf32-avr
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .text         000001c4  00000000  00000000  00000074  2**1
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .data         00000000  00800040  00800040  00000238  2**0
+                  CONTENTS, ALLOC, LOAD, DATA
+  2 .bss          0000000a  00800040  00800040  00000238  2**0
+                  ALLOC
+  3 .comment      00000030  00000000  00000000  00000238  2**0
+                  CONTENTS, READONLY
+  4 .note.gnu.avr.deviceinfo 0000003c  00000000  00000000  00000268  2**2
+                  CONTENTS, READONLY
+  5 .debug_aranges 00000048  00000000  00000000  000002a4  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  6 .debug_info   0000059e  00000000  00000000  000002ec  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  7 .debug_abbrev 0000044d  00000000  00000000  0000088a  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  8 .debug_line   0000037d  00000000  00000000  00000cd7  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  9 .debug_frame  00000090  00000000  00000000  00001054  2**2
+                  CONTENTS, READONLY, DEBUGGING
+ 10 .debug_str    00000347  00000000  00000000  000010e4  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 11 .debug_loc    00000090  00000000  00000000  0000142b  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 12 .debug_ranges 00000038  00000000  00000000  000014bb  2**0
+                  CONTENTS, READONLY, DEBUGGING
+
+Disassembly of section .text:
+
+00000000 <__vectors>:
+   0:	0a c0       	rjmp	.+20     	; 0x16 <__ctors_end>
+   2:	19 c0       	rjmp	.+50     	; 0x36 <__bad_interrupt>
+   4:	18 c0       	rjmp	.+48     	; 0x36 <__bad_interrupt>
+   6:	17 c0       	rjmp	.+46     	; 0x36 <__bad_interrupt>
+   8:	16 c0       	rjmp	.+44     	; 0x36 <__bad_interrupt>
+   a:	16 c0       	rjmp	.+44     	; 0x38 <__vector_5>
+   c:	14 c0       	rjmp	.+40     	; 0x36 <__bad_interrupt>
+   e:	13 c0       	rjmp	.+38     	; 0x36 <__bad_interrupt>
+  10:	12 c0       	rjmp	.+36     	; 0x36 <__bad_interrupt>
+  12:	11 c0       	rjmp	.+34     	; 0x36 <__bad_interrupt>
+  14:	10 c0       	rjmp	.+32     	; 0x36 <__bad_interrupt>
+
+00000016 <__ctors_end>:
+  16:	11 27       	eor	r17, r17
+  18:	1f bf       	out	0x3f, r17	; 63
+  1a:	cf e5       	ldi	r28, 0x5F	; 95
+  1c:	d0 e0       	ldi	r29, 0x00	; 0
+  1e:	de bf       	out	0x3e, r29	; 62
+  20:	cd bf       	out	0x3d, r28	; 61
+
+00000022 <__do_clear_bss>:
+  22:	20 e0       	ldi	r18, 0x00	; 0
+  24:	a0 e4       	ldi	r26, 0x40	; 64
+  26:	b0 e0       	ldi	r27, 0x00	; 0
+  28:	01 c0       	rjmp	.+2      	; 0x2c <.do_clear_bss_start>
+
+0000002a <.do_clear_bss_loop>:
+  2a:	1d 93       	st	X+, r17
+
+0000002c <.do_clear_bss_start>:
+  2c:	aa 34       	cpi	r26, 0x4A	; 74
+  2e:	b2 07       	cpc	r27, r18
+  30:	e1 f7       	brne	.-8      	; 0x2a <.do_clear_bss_loop>
+  32:	69 d0       	rcall	.+210    	; 0x106 <main>
+  34:	c5 c0       	rjmp	.+394    	; 0x1c0 <_exit>
+
+00000036 <__bad_interrupt>:
+  36:	e4 cf       	rjmp	.-56     	; 0x0 <__vectors>
+
+00000038 <__vector_5>:
+
+static volatile int16_t counter_set_2 = 0;
+static volatile int16_t counter_set_3 = 0;
+
+// when TIM0 timer triggers, calling this ISR
+ISR(TIM0_COMPA_vect){
+  38:	1f 93       	push	r17
+  3a:	0f 93       	push	r16
+  3c:	0f b7       	in	r16, 0x3f	; 63
+  3e:	0f 93       	push	r16
+  40:	10 e0       	ldi	r17, 0x00	; 0
+  42:	4f 93       	push	r20
+  44:	5f 93       	push	r21
+  46:	6f 93       	push	r22
+	if(device_0_active){
+  48:	45 a1       	lds	r20, 0x45	; 0x800045 <device_0_active>
+  4a:	44 23       	and	r20, r20
+  4c:	91 f0       	breq	.+36     	; 0x72 <__stack+0x13>
+		timer_count_0++;
+  4e:	48 a1       	lds	r20, 0x48	; 0x800048 <timer_count_0>
+  50:	59 a1       	lds	r21, 0x49	; 0x800049 <timer_count_0+0x1>
+  52:	4f 5f       	subi	r20, 0xFF	; 255
+  54:	5f 4f       	sbci	r21, 0xFF	; 255
+  56:	59 a9       	sts	0x49, r21	; 0x800049 <timer_count_0+0x1>
+  58:	48 a9       	sts	0x48, r20	; 0x800048 <timer_count_0>
+		
+		if(timer_count_0 > TIMER_FREQ * WATCHDOG_SECONDS){
+  5a:	48 a1       	lds	r20, 0x48	; 0x800048 <timer_count_0>
+  5c:	59 a1       	lds	r21, 0x49	; 0x800049 <timer_count_0+0x1>
+  5e:	49 38       	cpi	r20, 0x89	; 137
+  60:	53 41       	sbci	r21, 0x13	; 19
+  62:	38 f0       	brcs	.+14     	; 0x72 <__stack+0x13>
+			counter_set_2 = COUNTER_SET_MAX;
+  64:	40 e1       	ldi	r20, 0x10	; 16
+  66:	57 e2       	ldi	r21, 0x27	; 39
+  68:	53 a9       	sts	0x43, r21	; 0x800043 <counter_set_2+0x1>
+  6a:	42 a9       	sts	0x42, r20	; 0x800042 <counter_set_2>
+			device_0_active = 0;
+  6c:	15 a9       	sts	0x45, r17	; 0x800045 <device_0_active>
+			timer_count_0 = 0;
+  6e:	19 a9       	sts	0x49, r17	; 0x800049 <timer_count_0+0x1>
+  70:	18 a9       	sts	0x48, r17	; 0x800048 <timer_count_0>
+		}
+	}
+	if(device_1_active){
+  72:	44 a1       	lds	r20, 0x44	; 0x800044 <device_1_active>
+  74:	44 23       	and	r20, r20
+  76:	91 f0       	breq	.+36     	; 0x9c <__stack+0x3d>
+		timer_count_1++;
+  78:	46 a1       	lds	r20, 0x46	; 0x800046 <timer_count_1>
+  7a:	57 a1       	lds	r21, 0x47	; 0x800047 <timer_count_1+0x1>
+  7c:	4f 5f       	subi	r20, 0xFF	; 255
+  7e:	5f 4f       	sbci	r21, 0xFF	; 255
+  80:	57 a9       	sts	0x47, r21	; 0x800047 <timer_count_1+0x1>
+  82:	46 a9       	sts	0x46, r20	; 0x800046 <timer_count_1>
+
+		if(timer_count_1 > TIMER_FREQ * WATCHDOG_SECONDS){
+  84:	46 a1       	lds	r20, 0x46	; 0x800046 <timer_count_1>
+  86:	57 a1       	lds	r21, 0x47	; 0x800047 <timer_count_1+0x1>
+  88:	49 38       	cpi	r20, 0x89	; 137
+  8a:	53 41       	sbci	r21, 0x13	; 19
+  8c:	38 f0       	brcs	.+14     	; 0x9c <__stack+0x3d>
+			counter_set_3 = COUNTER_SET_MAX;
+  8e:	40 e1       	ldi	r20, 0x10	; 16
+  90:	57 e2       	ldi	r21, 0x27	; 39
+  92:	51 a9       	sts	0x41, r21	; 0x800041 <__DATA_REGION_ORIGIN__+0x1>
+  94:	40 a9       	sts	0x40, r20	; 0x800040 <__DATA_REGION_ORIGIN__>
+			device_1_active = 0;
+  96:	14 a9       	sts	0x44, r17	; 0x800044 <device_1_active>
+			timer_count_1 = 0;
+  98:	17 a9       	sts	0x47, r17	; 0x800047 <timer_count_1+0x1>
+  9a:	16 a9       	sts	0x46, r17	; 0x800046 <timer_count_1>
+		}
+	}
+}
+  9c:	6f 91       	pop	r22
+  9e:	5f 91       	pop	r21
+  a0:	4f 91       	pop	r20
+  a2:	0f 91       	pop	r16
+  a4:	0f bf       	out	0x3f, r16	; 63
+  a6:	0f 91       	pop	r16
+  a8:	1f 91       	pop	r17
+  aa:	18 95       	reti
+
+000000ac <set_pin>:
+    }
+}
+
+void set_pin(uint8_t pin, uint8_t state){
+	
+	if(state){
+  ac:	66 23       	and	r22, r22
+  ae:	59 f0       	breq	.+22     	; 0xc6 <set_pin+0x1a>
+		PORTB |= (1 << pin);
+  b0:	62 b1       	in	r22, 0x02	; 2
+  b2:	41 e0       	ldi	r20, 0x01	; 1
+  b4:	50 e0       	ldi	r21, 0x00	; 0
+  b6:	02 c0       	rjmp	.+4      	; 0xbc <set_pin+0x10>
+  b8:	44 0f       	add	r20, r20
+  ba:	55 1f       	adc	r21, r21
+  bc:	8a 95       	dec	r24
+  be:	e2 f7       	brpl	.-8      	; 0xb8 <set_pin+0xc>
+  c0:	46 2b       	or	r20, r22
+  c2:	42 b9       	out	0x02, r20	; 2
+  c4:	08 95       	ret
+	}
+	else{
+		PORTB &= ~(1 << pin);
+  c6:	62 b1       	in	r22, 0x02	; 2
+  c8:	41 e0       	ldi	r20, 0x01	; 1
+  ca:	50 e0       	ldi	r21, 0x00	; 0
+  cc:	02 c0       	rjmp	.+4      	; 0xd2 <set_pin+0x26>
+  ce:	44 0f       	add	r20, r20
+  d0:	55 1f       	adc	r21, r21
+  d2:	8a 95       	dec	r24
+  d4:	e2 f7       	brpl	.-8      	; 0xce <set_pin+0x22>
+  d6:	40 95       	com	r20
+  d8:	46 23       	and	r20, r22
+  da:	42 b9       	out	0x02, r20	; 2
+  dc:	08 95       	ret
+
+000000de <init_pins>:
+	}
+}
+
+void init_pins(){
+	
+	DDRB = 0b00001100;				// PB3 and PB2 set to output, PB1 and PB0 set to input
+  de:	4c e0       	ldi	r20, 0x0C	; 12
+  e0:	41 b9       	out	0x01, r20	; 1
+	PUEB = 0b00000011;				// PB0 and PB1 pull-up enabled
+  e2:	43 e0       	ldi	r20, 0x03	; 3
+  e4:	43 b9       	out	0x03, r20	; 3
+  e6:	08 95       	ret
+
+000000e8 <init_timer>:
+}
+
+void init_timer(){
+	
+	TCCR0A = 0b00000000;
+  e8:	1e bd       	out	0x2e, r17	; 46
+	switch(WAVEFORM_GENERATION_MODE){
+		case WAVEFORM_GENERATION_MODE_NORMAL:
+			TCCR0B |= 0b00000000;
+			break;
+		case WAVEFORM_GENERATION_MODE_CTC:
+			TCCR0B |= 0b00001000;
+  ea:	4d b5       	in	r20, 0x2d	; 45
+  ec:	48 60       	ori	r20, 0x08	; 8
+  ee:	4d bd       	out	0x2d, r20	; 45
+			break;
+		case CLOCK_SELECT_BIT_PRESCALE_256:
+			TCCR0B |= 0b00000100;
+			break;
+		case CLOCK_SELECT_BIT_PRESCALE_1024:
+			TCCR0B |= 0b00000101;
+  f0:	4d b5       	in	r20, 0x2d	; 45
+  f2:	45 60       	ori	r20, 0x05	; 5
+  f4:	4d bd       	out	0x2d, r20	; 45
+			break;
+		default:
+			TCCR0B |= 0b00000000;
+	}
+	
+	OCR0AH = OUTPUT_COMPARE_REGISTER_0_A >> 8;
+  f6:	17 bd       	out	0x27, r17	; 39
+	OCR0AL = OUTPUT_COMPARE_REGISTER_0_A & 0xFF;
+  f8:	47 e0       	ldi	r20, 0x07	; 7
+  fa:	46 bd       	out	0x26, r20	; 38
+		
+	TIMSK0 |= (1 << OCIE0A);		// set interrupt for timer
+  fc:	4b b5       	in	r20, 0x2b	; 43
+  fe:	42 60       	ori	r20, 0x02	; 2
+ 100:	4b bd       	out	0x2b, r20	; 43
+		
+	sei();							// enable interrupts
+ 102:	78 94       	sei
+ 104:	08 95       	ret
+
+00000106 <main>:
+int main(void)
+{
+//	CCP = 0xD8;						// unlock protected registers
+//	CLKPSR = 0;						// no divider = 8MHz
+
+	init_pins();
+ 106:	eb df       	rcall	.-42     	; 0xde <init_pins>
+	init_timer();
+ 108:	ef df       	rcall	.-34     	; 0xe8 <init_timer>
+	
+    while (1) 
+    {
+		if(!(PINB & PINB0)){	// PB0 pulled low
+ 10a:	40 b1       	in	r20, 0x00	; 0
+			if(!device_0_active){
+ 10c:	45 a1       	lds	r20, 0x45	; 0x800045 <device_0_active>
+ 10e:	41 13       	cpse	r20, r17
+ 110:	02 c0       	rjmp	.+4      	; 0x116 <main+0x10>
+				device_0_active = 1;
+ 112:	41 e0       	ldi	r20, 0x01	; 1
+ 114:	45 a9       	sts	0x45, r20	; 0x800045 <device_0_active>
+			}
+			timer_count_0 = 0;
+ 116:	19 a9       	sts	0x49, r17	; 0x800049 <timer_count_0+0x1>
+ 118:	18 a9       	sts	0x48, r17	; 0x800048 <timer_count_0>
+		}
+		
+		if(!(PINB & PINB1)){	// PB1 pulled low
+ 11a:	00 99       	sbic	0x00, 0	; 0
+ 11c:	07 c0       	rjmp	.+14     	; 0x12c <main+0x26>
+			if(!device_1_active){
+ 11e:	44 a1       	lds	r20, 0x44	; 0x800044 <device_1_active>
+ 120:	41 13       	cpse	r20, r17
+ 122:	02 c0       	rjmp	.+4      	; 0x128 <main+0x22>
+				device_1_active = 1;
+ 124:	41 e0       	ldi	r20, 0x01	; 1
+ 126:	44 a9       	sts	0x44, r20	; 0x800044 <device_1_active>
+			}
+			timer_count_1 = 0;
+ 128:	17 a9       	sts	0x47, r17	; 0x800047 <timer_count_1+0x1>
+ 12a:	16 a9       	sts	0x46, r17	; 0x800046 <timer_count_1>
+		}
+		
+		if(counter_set_2 > 0){
+ 12c:	42 a1       	lds	r20, 0x42	; 0x800042 <counter_set_2>
+ 12e:	53 a1       	lds	r21, 0x43	; 0x800043 <counter_set_2+0x1>
+ 130:	14 17       	cp	r17, r20
+ 132:	15 07       	cpc	r17, r21
+ 134:	7c f4       	brge	.+30     	; 0x154 <main+0x4e>
+			if(counter_set_2 == COUNTER_SET_MAX){
+ 136:	42 a1       	lds	r20, 0x42	; 0x800042 <counter_set_2>
+ 138:	53 a1       	lds	r21, 0x43	; 0x800043 <counter_set_2+0x1>
+ 13a:	40 31       	cpi	r20, 0x10	; 16
+ 13c:	57 42       	sbci	r21, 0x27	; 39
+ 13e:	19 f4       	brne	.+6      	; 0x146 <main+0x40>
+				set_pin(PINB2, 1);
+ 140:	61 e0       	ldi	r22, 0x01	; 1
+ 142:	82 e0       	ldi	r24, 0x02	; 2
+ 144:	b3 df       	rcall	.-154    	; 0xac <set_pin>
+			}
+			counter_set_2--;
+ 146:	42 a1       	lds	r20, 0x42	; 0x800042 <counter_set_2>
+ 148:	53 a1       	lds	r21, 0x43	; 0x800043 <counter_set_2+0x1>
+ 14a:	41 50       	subi	r20, 0x01	; 1
+ 14c:	51 0b       	sbc	r21, r17
+ 14e:	53 a9       	sts	0x43, r21	; 0x800043 <counter_set_2+0x1>
+ 150:	42 a9       	sts	0x42, r20	; 0x800042 <counter_set_2>
+ 152:	0d c0       	rjmp	.+26     	; 0x16e <main+0x68>
+		}
+		else if(counter_set_2 == 0){
+ 154:	42 a1       	lds	r20, 0x42	; 0x800042 <counter_set_2>
+ 156:	53 a1       	lds	r21, 0x43	; 0x800043 <counter_set_2+0x1>
+ 158:	45 2b       	or	r20, r21
+ 15a:	49 f4       	brne	.+18     	; 0x16e <main+0x68>
+			set_pin(PINB2, 0);
+ 15c:	60 e0       	ldi	r22, 0x00	; 0
+ 15e:	82 e0       	ldi	r24, 0x02	; 2
+ 160:	a5 df       	rcall	.-182    	; 0xac <set_pin>
+			counter_set_2--;
+ 162:	42 a1       	lds	r20, 0x42	; 0x800042 <counter_set_2>
+ 164:	53 a1       	lds	r21, 0x43	; 0x800043 <counter_set_2+0x1>
+ 166:	41 50       	subi	r20, 0x01	; 1
+ 168:	51 0b       	sbc	r21, r17
+ 16a:	53 a9       	sts	0x43, r21	; 0x800043 <counter_set_2+0x1>
+ 16c:	42 a9       	sts	0x42, r20	; 0x800042 <counter_set_2>
+		}
+	
+		if(counter_set_3 > 0){
+ 16e:	40 a1       	lds	r20, 0x40	; 0x800040 <__DATA_REGION_ORIGIN__>
+ 170:	51 a1       	lds	r21, 0x41	; 0x800041 <__DATA_REGION_ORIGIN__+0x1>
+ 172:	14 17       	cp	r17, r20
+ 174:	15 07       	cpc	r17, r21
+ 176:	7c f4       	brge	.+30     	; 0x196 <main+0x90>
+			if(counter_set_3 == COUNTER_SET_MAX){
+ 178:	40 a1       	lds	r20, 0x40	; 0x800040 <__DATA_REGION_ORIGIN__>
+ 17a:	51 a1       	lds	r21, 0x41	; 0x800041 <__DATA_REGION_ORIGIN__+0x1>
+ 17c:	40 31       	cpi	r20, 0x10	; 16
+ 17e:	57 42       	sbci	r21, 0x27	; 39
+ 180:	19 f4       	brne	.+6      	; 0x188 <main+0x82>
+				set_pin(PINB3, 1);
+ 182:	61 e0       	ldi	r22, 0x01	; 1
+ 184:	83 e0       	ldi	r24, 0x03	; 3
+ 186:	92 df       	rcall	.-220    	; 0xac <set_pin>
+			}
+			counter_set_3--;
+ 188:	40 a1       	lds	r20, 0x40	; 0x800040 <__DATA_REGION_ORIGIN__>
+ 18a:	51 a1       	lds	r21, 0x41	; 0x800041 <__DATA_REGION_ORIGIN__+0x1>
+ 18c:	41 50       	subi	r20, 0x01	; 1
+ 18e:	51 0b       	sbc	r21, r17
+ 190:	51 a9       	sts	0x41, r21	; 0x800041 <__DATA_REGION_ORIGIN__+0x1>
+ 192:	40 a9       	sts	0x40, r20	; 0x800040 <__DATA_REGION_ORIGIN__>
+ 194:	0d c0       	rjmp	.+26     	; 0x1b0 <main+0xaa>
+		}
+		else if(counter_set_3 == 0){
+ 196:	40 a1       	lds	r20, 0x40	; 0x800040 <__DATA_REGION_ORIGIN__>
+ 198:	51 a1       	lds	r21, 0x41	; 0x800041 <__DATA_REGION_ORIGIN__+0x1>
+ 19a:	45 2b       	or	r20, r21
+ 19c:	49 f4       	brne	.+18     	; 0x1b0 <main+0xaa>
+			set_pin(PINB3, 0);
+ 19e:	60 e0       	ldi	r22, 0x00	; 0
+ 1a0:	83 e0       	ldi	r24, 0x03	; 3
+ 1a2:	84 df       	rcall	.-248    	; 0xac <set_pin>
+			counter_set_3--;
+ 1a4:	40 a1       	lds	r20, 0x40	; 0x800040 <__DATA_REGION_ORIGIN__>
+ 1a6:	51 a1       	lds	r21, 0x41	; 0x800041 <__DATA_REGION_ORIGIN__+0x1>
+ 1a8:	41 50       	subi	r20, 0x01	; 1
+ 1aa:	51 0b       	sbc	r21, r17
+ 1ac:	51 a9       	sts	0x41, r21	; 0x800041 <__DATA_REGION_ORIGIN__+0x1>
+ 1ae:	40 a9       	sts	0x40, r20	; 0x800040 <__DATA_REGION_ORIGIN__>
+	#else
+		//round up by default
+		__ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
+	#endif
+
+	__builtin_avr_delay_cycles(__ticks_dc);
+ 1b0:	47 ec       	ldi	r20, 0xC7	; 199
+ 1b2:	50 e0       	ldi	r21, 0x00	; 0
+ 1b4:	41 50       	subi	r20, 0x01	; 1
+ 1b6:	50 40       	sbci	r21, 0x00	; 0
+ 1b8:	e9 f7       	brne	.-6      	; 0x1b4 <main+0xae>
+ 1ba:	00 c0       	rjmp	.+0      	; 0x1bc <main+0xb6>
+ 1bc:	00 00       	nop
+ 1be:	a5 cf       	rjmp	.-182    	; 0x10a <main+0x4>
+
+000001c0 <_exit>:
+ 1c0:	f8 94       	cli
+
+000001c2 <__stop_program>:
+ 1c2:	ff cf       	rjmp	.-2      	; 0x1c2 <__stop_program>
