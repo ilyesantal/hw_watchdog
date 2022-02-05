@@ -42,9 +42,9 @@ void set_pin(uint8_t pin, uint8_t state);
 
 uint8_t read_pin(uint8_t pin);
 
-#define WATCHDOG_SECONDS 5
+#define WATCHDOG_SECONDS 10
 
-#if (WATCHDOG_SECONDS > 65)
+#if (WATCHDOG_SECONDS * TIMER_FREQ > INT16_MAX)
 #error "overflow error"
 #endif
 
@@ -87,22 +87,22 @@ ISR(TIM0_COMPA_vect){
 
 int main(void)
 {
-//	CCP = 0xD8;						// unlock protected registers
-//	CLKPSR = 0;						// no divider = 8MHz
+	CCP = 0xD8;						// unlock protected registers
+	CLKPSR = 0;						// no divider = 8MHz
 
 	init_pins();
 	init_timer();
 	
     while (1) 
     {
-		if(!(PINB & PINB0)){	// PB0 pulled low
+		if(PINB & PINB0){	// PB0 pulled high
 			if(!device_0_active){
 				device_0_active = 1;
 			}
 			timer_count_0 = 0;
 		}
 		
-		if(!(PINB & PINB1)){	// PB1 pulled low
+		if(PINB & PINB1){	// PB1 pulled high
 			if(!device_1_active){
 				device_1_active = 1;
 			}
@@ -149,6 +149,8 @@ void init_pins(){
 	
 	DDRB = 0b00001100;				// PB3 and PB2 set to output, PB1 and PB0 set to input
 	PUEB = 0b00000011;				// PB0 and PB1 pull-up enabled
+	set_pin(PINB2, 0);
+	set_pin(PINB3, 0);
 }
 
 void init_timer(){
