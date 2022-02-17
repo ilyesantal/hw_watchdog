@@ -5,9 +5,11 @@
  * Author : Antal Ilyes
  */ 
 
+// waveform types
 #define WAVEFORM_GENERATION_MODE_NORMAL 0
 #define WAVEFORM_GENERATION_MODE_CTC 4
 
+// clock prescaler types
 #define CLOCK_SELECT_BIT_NO_CLK 0
 #define CLOCK_SELECT_BIT_NO_PRESCALING 1
 #define CLOCK_SELECT_BIT_PRESCALE_8 8
@@ -17,6 +19,7 @@
 #define CLOCK_SELECT_BIT_EXT_T0_FALLING 6
 #define CLOCK_SELECT_BIT_EXT_T0_RISING 7
 
+// CPU clock frequency in Hz
 #define F_CPU 8000000U
 
 #include <limits.h>
@@ -26,9 +29,14 @@
 
 void init_pins();
 
-#define TIMER_FREQ 1000
+// defines for the timer initialization
+//      timer frequency, in Hz
+#define TIMER_FREQ 100
+//		prescaler type select
 #define CLOCK_SELECT_BIT CLOCK_SELECT_BIT_PRESCALE_1024
+//		waveform type select
 #define WAVEFORM_GENERATION_MODE WAVEFORM_GENERATION_MODE_CTC
+//		calculate the compare register value based on previous parameters
 #if ((CLOCK_SELECT_BIT == CLOCK_SELECT_BIT_PRESCALE_1024) || (CLOCK_SELECT_BIT == CLOCK_SELECT_BIT_PRESCALE_256) || (CLOCK_SELECT_BIT == CLOCK_SELECT_BIT_PRESCALE_64) || (CLOCK_SELECT_BIT == CLOCK_SELECT_BIT_PRESCALE_8))
 #define OUTPUT_COMPARE_REGISTER_0_A (F_CPU / CLOCK_SELECT_BIT / TIMER_FREQ)
 #else
@@ -38,49 +46,123 @@ void init_timer();
 
 void reset_timer();
 
+void init_pcint();
+
 void set_pin(uint8_t pin, uint8_t state);
 
 uint8_t read_pin(uint8_t pin);
 
-#define WATCHDOG_SECONDS 10
-
-#if (WATCHDOG_SECONDS * TIMER_FREQ > INT16_MAX)
+// count of iterations while output pulled high
+#define HIGH_OUT_COUNTER_MAX 50000
+// validation
+#if (HIGH_OUT_COUNTER_MAX > INT32_MAX)
 #error "overflow error"
 #endif
 
-#define COUNTER_SET_MAX 10000
+// possible device states
+#define DEVICE_STATUS_INACTIVE 0
+#define DEVICE_STATUS_INIT 1
+#define DEVICE_STATUS_ACTIVE 2
 
-#if (COUNTER_SET_MAX > INT16_MAX)
-#error "overflow error"
-#endif
+// how many times timer initiated since input
+static volatile uint16_t timer_count_0 = 0;	
+static volatile uint16_t timer_count_1 = 0;
 
-static volatile uint16_t timer_count_0 = 0;	// how many times timer initiated since input0
-static volatile uint16_t timer_count_1 = 0;	// how many times timer initiated since input1
+// status of devices
+static volatile uint8_t device_0_status = DEVICE_STATUS_INACTIVE;
+static volatile uint8_t device_1_status = DEVICE_STATUS_INACTIVE;
 
-static volatile uint8_t device_0_active = 0;
-static volatile uint8_t device_1_active = 0;
+// current counter for devices
+static volatile int32_t counter_device_2 = 0;
+static volatile int32_t counter_device_3 = 0;
 
-static volatile int16_t counter_set_2 = 0;
-static volatile int16_t counter_set_3 = 0;
+// the rough time between pings
+static volatile uint16_t counter_val_0 = 0;
+static volatile uint16_t counter_val_1 = 0;
+
+static volatile uint8_t pin_status = 0;
 
 // when TIM0 timer triggers, calling this ISR
 ISR(TIM0_COMPA_vect){
-	if(device_0_active){
-		timer_count_0++;
+	// check device status
+	switch(device_0_status){
+		// if the device is active
+		case DEVICE_STATUS_ACTIVE:
+			// increase counter
+			timer_count_0++;
+			
+			//if the counter reaches the maximum value - which is 5 times the input frequency -, set the device to inactive, set the output to high
+			if(timer_count_0 > counter_val_0 * 5){
+				counter_device_2 = HIGH_OUT_COUNTER_MAX;
+				device_0_status = DEVICE_STATUS_INACTIVE;
+				timer_count_0 = 0;
+			}
+			break;
+		// if the device is set to init, count the cycles until set to active - which happens when is in init but next input comes
+		case DEVICE_STATUS_INIT:
+			counter_val_0++;
+			break;
+		case DEVICE_STATUS_INACTIVE:
+			//do nothing
+			break;
+	}
+	
+	switch(device_1_status){
+		case DEVICE_STATUS_ACTIVE:
+			timer_count_1++;
 		
-		if(timer_count_0 > TIMER_FREQ * WATCHDOG_SECONDS){
-			counter_set_2 = COUNTER_SET_MAX;
-			device_0_active = 0;
-			timer_count_0 = 0;
+			if(timer_count_1 > counter_val_1 * 5){
+				counter_device_3 = HIGH_OUT_COUNTER_MAX;
+				device_1_status = DEVICE_STATUS_INACTIVE;
+				timer_count_1 = 0;
+			}
+			break;
+		case DEVICE_STATUS_INIT:
+			counter_val_1++;
+			break;
+		case DEVICE_STATUS_INACTIVE:
+			//do nothing
+			break;
+	}
+}
+
+// when input pins change state, calling this ISR
+ISR(PCINT0_vect){
+	// PB0 pulled high
+	if(PINB & (1 << PINB0)){
+		switch(device_0_status){
+			// if device was inactive, set it to init, this way the timer starts counting the time between pings, reset the counter value
+			case DEVICE_STATUS_INACTIVE:
+				counter_val_0 = 0;
+				device_0_status = DEVICE_STATUS_INIT;
+				break;
+			// if was in init, go to active, the timer starts counting
+			case DEVICE_STATUS_INIT:
+				if(counter_val_0 > 100){
+					device_0_status = DEVICE_STATUS_ACTIVE;
+				}
+				break;
+			// if device is active, reset counter, so it doesn't set the out high
+			case DEVICE_STATUS_ACTIVE:
+				timer_count_0 = 0;
+				break;
 		}
 	}
-	if(device_1_active){
-		timer_count_1++;
-
-		if(timer_count_1 > TIMER_FREQ * WATCHDOG_SECONDS){
-			counter_set_3 = COUNTER_SET_MAX;
-			device_1_active = 0;
-			timer_count_1 = 0;
+	// PB1 pulled high
+	if(PINB & (1 << PINB1)){
+		switch(device_1_status){
+			case DEVICE_STATUS_INACTIVE:
+				counter_val_1 = 0;
+				device_1_status = DEVICE_STATUS_INIT;
+				break;
+			case DEVICE_STATUS_INIT:
+				if(counter_val_1 > 100){
+					device_1_status = DEVICE_STATUS_ACTIVE;
+				}
+				break;
+			case DEVICE_STATUS_ACTIVE:
+				timer_count_1 = 0;
+				break;
 		}
 	}
 }
@@ -92,43 +174,34 @@ int main(void)
 
 	init_pins();
 	init_timer();
+	init_pcint();
 	
-    while (1) 
+	// main loop
+    while (1)
     {
-		if(PINB & PINB0){	// PB0 pulled high
-			if(!device_0_active){
-				device_0_active = 1;
-			}
-			timer_count_0 = 0;
-		}
-		
-		if(PINB & PINB1){	// PB1 pulled high
-			if(!device_1_active){
-				device_1_active = 1;
-			}
-			timer_count_1 = 0;
-		}
-		
-		if(counter_set_2 > 0){
-			if(counter_set_2 == COUNTER_SET_MAX){
+		// if output should be set high, set it (only when the value is the max value, so it was just set recently
+		if(counter_device_2 > 0){
+			if(counter_device_2 == HIGH_OUT_COUNTER_MAX){
 				set_pin(PINB2, 1);
 			}
-			counter_set_2--;
+			counter_device_2--;
 		}
-		else if(counter_set_2 == 0){
+		// if we keeped in high for long enough, set back to low, decrease one more, so it doesn't come to this state again
+		else if(counter_device_2 == 0){
 			set_pin(PINB2, 0);
-			counter_set_2--;
+			counter_device_2--;
+			
 		}
 	
-		if(counter_set_3 > 0){
-			if(counter_set_3 == COUNTER_SET_MAX){
+		if(counter_device_3 > 0){
+			if(counter_device_3 == HIGH_OUT_COUNTER_MAX){
 				set_pin(PINB3, 1);
 			}
-			counter_set_3--;
+			counter_device_3--;
 		}
-		else if(counter_set_3 == 0){
+		else if(counter_device_3 == 0){
 			set_pin(PINB3, 0);
-			counter_set_3--;
+			counter_device_3--;
 		}
 		
 		_delay_us(100);
@@ -145,14 +218,19 @@ void set_pin(uint8_t pin, uint8_t state){
 	}
 }
 
+// initialize input and output pins
 void init_pins(){
-	
-	DDRB = 0b00001100;				// PB3 and PB2 set to output, PB1 and PB0 set to input
-	PUEB = 0b00000011;				// PB0 and PB1 pull-up enabled
+	DDRB |= (1 << PINB2);			// Set the pin pin 2 as output
+	DDRB |= (1 << PINB3);			// Set the pin pin 3 as output
+	DDRB &= ~(1 << PINB0);			// Set the pin pin 0 as input
+	DDRB &= ~(1 << PINB1);			// Set the pin pin 1 as input
+	PORTB |= (1 << PINB0);			//activate pull-up resistor for pin 0
+	PORTB |= (1 << PINB1);			//activate pull-up resistor for pin 1
 	set_pin(PINB2, 0);
 	set_pin(PINB3, 0);
 }
 
+// initialize timer
 void init_timer(){
 	
 	TCCR0A = 0b00000000;
@@ -212,4 +290,11 @@ void reset_timer(){
 	TCNT0 = 0;						// set clock to 0
 	TCCR0B = 0b00001101;			// reactivate clock
 	sei();
+}
+
+// initialize interrupt for pins
+void init_pcint(){
+	PCICR |= (1 << PCIE0);
+	PCMSK |= (1 << PCINT0);
+	PCMSK |= (1 << PCINT1);
 }

@@ -3,31 +3,31 @@ hw_watchdog.elf:     file format elf32-avr
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
-  0 .text         000001c8  00000000  00000000  00000074  2**1
+  0 .text         00000322  00000000  00000000  00000074  2**1
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  1 .data         00000000  00800040  00800040  0000023c  2**0
+  1 .data         00000000  00800040  00800040  00000396  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  2 .bss          0000000a  00800040  00800040  0000023c  2**0
+  2 .bss          00000012  00800040  00800040  00000396  2**0
                   ALLOC
-  3 .comment      00000030  00000000  00000000  0000023c  2**0
+  3 .comment      00000030  00000000  00000000  00000396  2**0
                   CONTENTS, READONLY
-  4 .note.gnu.avr.deviceinfo 0000003c  00000000  00000000  0000026c  2**2
+  4 .note.gnu.avr.deviceinfo 0000003c  00000000  00000000  000003c8  2**2
                   CONTENTS, READONLY
-  5 .debug_aranges 00000048  00000000  00000000  000002a8  2**0
+  5 .debug_aranges 00000058  00000000  00000000  00000404  2**0
                   CONTENTS, READONLY, DEBUGGING
-  6 .debug_info   000005cf  00000000  00000000  000002f0  2**0
+  6 .debug_info   00000638  00000000  00000000  0000045c  2**0
                   CONTENTS, READONLY, DEBUGGING
-  7 .debug_abbrev 00000465  00000000  00000000  000008bf  2**0
+  7 .debug_abbrev 0000047b  00000000  00000000  00000a94  2**0
                   CONTENTS, READONLY, DEBUGGING
-  8 .debug_line   00000383  00000000  00000000  00000d24  2**0
+  8 .debug_line   00000429  00000000  00000000  00000f0f  2**0
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_frame  00000090  00000000  00000000  000010a8  2**2
+  9 .debug_frame  000000c8  00000000  00000000  00001338  2**2
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_str    0000034e  00000000  00000000  00001138  2**0
+ 10 .debug_str    0000037f  00000000  00000000  00001400  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_loc    00000090  00000000  00000000  00001486  2**0
+ 11 .debug_loc    000000e6  00000000  00000000  0000177f  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_ranges 00000038  00000000  00000000  00001516  2**0
+ 12 .debug_ranges 00000048  00000000  00000000  00001865  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -35,7 +35,7 @@ Disassembly of section .text:
 00000000 <__vectors>:
    0:	0a c0       	rjmp	.+20     	; 0x16 <__ctors_end>
    2:	19 c0       	rjmp	.+50     	; 0x36 <__bad_interrupt>
-   4:	18 c0       	rjmp	.+48     	; 0x36 <__bad_interrupt>
+   4:	83 c0       	rjmp	.+262    	; 0x10c <__vector_2>
    6:	17 c0       	rjmp	.+46     	; 0x36 <__bad_interrupt>
    8:	16 c0       	rjmp	.+44     	; 0x36 <__bad_interrupt>
    a:	16 c0       	rjmp	.+44     	; 0x38 <__vector_5>
@@ -63,22 +63,22 @@ Disassembly of section .text:
   2a:	1d 93       	st	X+, r17
 
 0000002c <.do_clear_bss_start>:
-  2c:	aa 34       	cpi	r26, 0x4A	; 74
+  2c:	a2 35       	cpi	r26, 0x52	; 82
   2e:	b2 07       	cpc	r27, r18
   30:	e1 f7       	brne	.-8      	; 0x2a <.do_clear_bss_loop>
-  32:	6f d0       	rcall	.+222    	; 0x112 <main>
-  34:	c7 c0       	rjmp	.+398    	; 0x1c4 <_exit>
+  32:	f5 d0       	rcall	.+490    	; 0x21e <main>
+  34:	74 c1       	rjmp	.+744    	; 0x31e <_exit>
 
 00000036 <__bad_interrupt>:
   36:	e4 cf       	rjmp	.-56     	; 0x0 <__vectors>
 
 00000038 <__vector_5>:
-
-static volatile int16_t counter_set_2 = 0;
-static volatile int16_t counter_set_3 = 0;
-
-// when TIM0 timer triggers, calling this ISR
-ISR(TIM0_COMPA_vect){
+	
+	cli();
+	TCCR0B = 0b00001000;			// deactivate clock
+	TCNT0 = 0;						// set clock to 0
+	TCCR0B = 0b00001101;			// reactivate clock
+	sei();
   38:	1f 93       	push	r17
   3a:	0f 93       	push	r16
   3c:	0f b7       	in	r16, 0x3f	; 63
@@ -87,325 +87,435 @@ ISR(TIM0_COMPA_vect){
   42:	4f 93       	push	r20
   44:	5f 93       	push	r21
   46:	6f 93       	push	r22
-	if(device_0_active){
-  48:	45 a1       	lds	r20, 0x45	; 0x800045 <device_0_active>
-  4a:	44 23       	and	r20, r20
-  4c:	91 f0       	breq	.+36     	; 0x72 <__stack+0x13>
-		timer_count_0++;
-  4e:	48 a1       	lds	r20, 0x48	; 0x800048 <timer_count_0>
-  50:	59 a1       	lds	r21, 0x49	; 0x800049 <timer_count_0+0x1>
-  52:	4f 5f       	subi	r20, 0xFF	; 255
-  54:	5f 4f       	sbci	r21, 0xFF	; 255
-  56:	59 a9       	sts	0x49, r21	; 0x800049 <timer_count_0+0x1>
-  58:	48 a9       	sts	0x48, r20	; 0x800048 <timer_count_0>
-		
-		if(timer_count_0 > TIMER_FREQ * WATCHDOG_SECONDS){
-  5a:	48 a1       	lds	r20, 0x48	; 0x800048 <timer_count_0>
-  5c:	59 a1       	lds	r21, 0x49	; 0x800049 <timer_count_0+0x1>
-  5e:	41 31       	cpi	r20, 0x11	; 17
-  60:	57 42       	sbci	r21, 0x27	; 39
-  62:	38 f0       	brcs	.+14     	; 0x72 <__stack+0x13>
-			counter_set_2 = COUNTER_SET_MAX;
-  64:	40 e1       	ldi	r20, 0x10	; 16
-  66:	57 e2       	ldi	r21, 0x27	; 39
-  68:	53 a9       	sts	0x43, r21	; 0x800043 <counter_set_2+0x1>
-  6a:	42 a9       	sts	0x42, r20	; 0x800042 <counter_set_2>
-			device_0_active = 0;
-  6c:	15 a9       	sts	0x45, r17	; 0x800045 <device_0_active>
-			timer_count_0 = 0;
-  6e:	19 a9       	sts	0x49, r17	; 0x800049 <timer_count_0+0x1>
-  70:	18 a9       	sts	0x48, r17	; 0x800048 <timer_count_0>
-		}
-	}
-	if(device_1_active){
-  72:	44 a1       	lds	r20, 0x44	; 0x800044 <device_1_active>
-  74:	44 23       	and	r20, r20
-  76:	91 f0       	breq	.+36     	; 0x9c <__stack+0x3d>
-		timer_count_1++;
-  78:	46 a1       	lds	r20, 0x46	; 0x800046 <timer_count_1>
-  7a:	57 a1       	lds	r21, 0x47	; 0x800047 <timer_count_1+0x1>
-  7c:	4f 5f       	subi	r20, 0xFF	; 255
-  7e:	5f 4f       	sbci	r21, 0xFF	; 255
-  80:	57 a9       	sts	0x47, r21	; 0x800047 <timer_count_1+0x1>
-  82:	46 a9       	sts	0x46, r20	; 0x800046 <timer_count_1>
+  48:	7f 93       	push	r23
+  4a:	4d a1       	lds	r20, 0x4d	; 0x80004d <device_0_status>
+  4c:	41 30       	cpi	r20, 0x01	; 1
+  4e:	19 f1       	breq	.+70     	; 0x96 <__stack+0x37>
+  50:	42 30       	cpi	r20, 0x02	; 2
+  52:	39 f5       	brne	.+78     	; 0xa2 <__stack+0x43>
+  54:	40 a3       	lds	r20, 0x50	; 0x800050 <timer_count_0>
+  56:	51 a3       	lds	r21, 0x51	; 0x800051 <timer_count_0+0x1>
+  58:	4f 5f       	subi	r20, 0xFF	; 255
+  5a:	5f 4f       	sbci	r21, 0xFF	; 255
+  5c:	51 ab       	sts	0x51, r21	; 0x800051 <timer_count_0+0x1>
+  5e:	40 ab       	sts	0x50, r20	; 0x800050 <timer_count_0>
+  60:	42 a1       	lds	r20, 0x42	; 0x800042 <counter_val_0>
+  62:	53 a1       	lds	r21, 0x43	; 0x800043 <counter_val_0+0x1>
+  64:	64 2f       	mov	r22, r20
+  66:	75 2f       	mov	r23, r21
+  68:	66 0f       	add	r22, r22
+  6a:	77 1f       	adc	r23, r23
+  6c:	66 0f       	add	r22, r22
+  6e:	77 1f       	adc	r23, r23
+  70:	46 0f       	add	r20, r22
+  72:	57 1f       	adc	r21, r23
+  74:	60 a3       	lds	r22, 0x50	; 0x800050 <timer_count_0>
+  76:	71 a3       	lds	r23, 0x51	; 0x800051 <timer_count_0+0x1>
+  78:	46 17       	cp	r20, r22
+  7a:	57 07       	cpc	r21, r23
+  7c:	90 f4       	brcc	.+36     	; 0xa2 <__stack+0x43>
+  7e:	40 e5       	ldi	r20, 0x50	; 80
+  80:	53 ec       	ldi	r21, 0xC3	; 195
+  82:	60 e0       	ldi	r22, 0x00	; 0
+  84:	70 e0       	ldi	r23, 0x00	; 0
+  86:	48 a9       	sts	0x48, r20	; 0x800048 <counter_device_2>
+  88:	59 a9       	sts	0x49, r21	; 0x800049 <counter_device_2+0x1>
+  8a:	6a a9       	sts	0x4a, r22	; 0x80004a <counter_device_2+0x2>
+  8c:	7b a9       	sts	0x4b, r23	; 0x80004b <counter_device_2+0x3>
+  8e:	1d a9       	sts	0x4d, r17	; 0x80004d <device_0_status>
+  90:	11 ab       	sts	0x51, r17	; 0x800051 <timer_count_0+0x1>
+  92:	10 ab       	sts	0x50, r17	; 0x800050 <timer_count_0>
+  94:	06 c0       	rjmp	.+12     	; 0xa2 <__stack+0x43>
+  96:	42 a1       	lds	r20, 0x42	; 0x800042 <counter_val_0>
+  98:	53 a1       	lds	r21, 0x43	; 0x800043 <counter_val_0+0x1>
+  9a:	4f 5f       	subi	r20, 0xFF	; 255
+  9c:	5f 4f       	sbci	r21, 0xFF	; 255
+  9e:	53 a9       	sts	0x43, r21	; 0x800043 <counter_val_0+0x1>
+  a0:	42 a9       	sts	0x42, r20	; 0x800042 <counter_val_0>
+  a2:	4c a1       	lds	r20, 0x4c	; 0x80004c <device_1_status>
+  a4:	41 30       	cpi	r20, 0x01	; 1
+  a6:	19 f1       	breq	.+70     	; 0xee <__stack+0x8f>
+  a8:	42 30       	cpi	r20, 0x02	; 2
+  aa:	39 f5       	brne	.+78     	; 0xfa <__stack+0x9b>
+  ac:	4e a1       	lds	r20, 0x4e	; 0x80004e <timer_count_1>
+  ae:	5f a1       	lds	r21, 0x4f	; 0x80004f <timer_count_1+0x1>
+  b0:	4f 5f       	subi	r20, 0xFF	; 255
+  b2:	5f 4f       	sbci	r21, 0xFF	; 255
+  b4:	5f a9       	sts	0x4f, r21	; 0x80004f <timer_count_1+0x1>
+  b6:	4e a9       	sts	0x4e, r20	; 0x80004e <timer_count_1>
+  b8:	40 a1       	lds	r20, 0x40	; 0x800040 <__DATA_REGION_ORIGIN__>
+  ba:	51 a1       	lds	r21, 0x41	; 0x800041 <__DATA_REGION_ORIGIN__+0x1>
+  bc:	64 2f       	mov	r22, r20
+  be:	75 2f       	mov	r23, r21
+  c0:	66 0f       	add	r22, r22
+  c2:	77 1f       	adc	r23, r23
+  c4:	66 0f       	add	r22, r22
+  c6:	77 1f       	adc	r23, r23
+  c8:	46 0f       	add	r20, r22
+  ca:	57 1f       	adc	r21, r23
+  cc:	6e a1       	lds	r22, 0x4e	; 0x80004e <timer_count_1>
+  ce:	7f a1       	lds	r23, 0x4f	; 0x80004f <timer_count_1+0x1>
+  d0:	46 17       	cp	r20, r22
+  d2:	57 07       	cpc	r21, r23
+  d4:	90 f4       	brcc	.+36     	; 0xfa <__stack+0x9b>
+  d6:	40 e5       	ldi	r20, 0x50	; 80
+  d8:	53 ec       	ldi	r21, 0xC3	; 195
+  da:	60 e0       	ldi	r22, 0x00	; 0
+  dc:	70 e0       	ldi	r23, 0x00	; 0
+  de:	44 a9       	sts	0x44, r20	; 0x800044 <counter_device_3>
+  e0:	55 a9       	sts	0x45, r21	; 0x800045 <counter_device_3+0x1>
+  e2:	66 a9       	sts	0x46, r22	; 0x800046 <counter_device_3+0x2>
+  e4:	77 a9       	sts	0x47, r23	; 0x800047 <counter_device_3+0x3>
+  e6:	1c a9       	sts	0x4c, r17	; 0x80004c <device_1_status>
+  e8:	1f a9       	sts	0x4f, r17	; 0x80004f <timer_count_1+0x1>
+  ea:	1e a9       	sts	0x4e, r17	; 0x80004e <timer_count_1>
+  ec:	06 c0       	rjmp	.+12     	; 0xfa <__stack+0x9b>
+  ee:	40 a1       	lds	r20, 0x40	; 0x800040 <__DATA_REGION_ORIGIN__>
+  f0:	51 a1       	lds	r21, 0x41	; 0x800041 <__DATA_REGION_ORIGIN__+0x1>
+  f2:	4f 5f       	subi	r20, 0xFF	; 255
+  f4:	5f 4f       	sbci	r21, 0xFF	; 255
+  f6:	51 a9       	sts	0x41, r21	; 0x800041 <__DATA_REGION_ORIGIN__+0x1>
+  f8:	40 a9       	sts	0x40, r20	; 0x800040 <__DATA_REGION_ORIGIN__>
+  fa:	7f 91       	pop	r23
+  fc:	6f 91       	pop	r22
+  fe:	5f 91       	pop	r21
+ 100:	4f 91       	pop	r20
+ 102:	0f 91       	pop	r16
+ 104:	0f bf       	out	0x3f, r16	; 63
+ 106:	0f 91       	pop	r16
+ 108:	1f 91       	pop	r17
+ 10a:	18 95       	reti
 
-		if(timer_count_1 > TIMER_FREQ * WATCHDOG_SECONDS){
-  84:	46 a1       	lds	r20, 0x46	; 0x800046 <timer_count_1>
-  86:	57 a1       	lds	r21, 0x47	; 0x800047 <timer_count_1+0x1>
-  88:	41 31       	cpi	r20, 0x11	; 17
-  8a:	57 42       	sbci	r21, 0x27	; 39
-  8c:	38 f0       	brcs	.+14     	; 0x9c <__stack+0x3d>
-			counter_set_3 = COUNTER_SET_MAX;
-  8e:	40 e1       	ldi	r20, 0x10	; 16
-  90:	57 e2       	ldi	r21, 0x27	; 39
-  92:	51 a9       	sts	0x41, r21	; 0x800041 <__DATA_REGION_ORIGIN__+0x1>
-  94:	40 a9       	sts	0x40, r20	; 0x800040 <__DATA_REGION_ORIGIN__>
-			device_1_active = 0;
-  96:	14 a9       	sts	0x44, r17	; 0x800044 <device_1_active>
-			timer_count_1 = 0;
-  98:	17 a9       	sts	0x47, r17	; 0x800047 <timer_count_1+0x1>
-  9a:	16 a9       	sts	0x46, r17	; 0x800046 <timer_count_1>
-		}
-	}
+0000010c <__vector_2>:
+ 10c:	1f 93       	push	r17
+ 10e:	0f 93       	push	r16
+ 110:	0f b7       	in	r16, 0x3f	; 63
+ 112:	0f 93       	push	r16
+ 114:	10 e0       	ldi	r17, 0x00	; 0
+ 116:	4f 93       	push	r20
+ 118:	5f 93       	push	r21
+ 11a:	00 9b       	sbis	0x00, 0	; 0
+ 11c:	16 c0       	rjmp	.+44     	; 0x14a <__vector_2+0x3e>
+ 11e:	4d a1       	lds	r20, 0x4d	; 0x80004d <device_0_status>
+ 120:	41 30       	cpi	r20, 0x01	; 1
+ 122:	49 f0       	breq	.+18     	; 0x136 <__vector_2+0x2a>
+ 124:	18 f0       	brcs	.+6      	; 0x12c <__vector_2+0x20>
+ 126:	42 30       	cpi	r20, 0x02	; 2
+ 128:	71 f0       	breq	.+28     	; 0x146 <__vector_2+0x3a>
+ 12a:	0f c0       	rjmp	.+30     	; 0x14a <__vector_2+0x3e>
+ 12c:	13 a9       	sts	0x43, r17	; 0x800043 <counter_val_0+0x1>
+ 12e:	12 a9       	sts	0x42, r17	; 0x800042 <counter_val_0>
+ 130:	41 e0       	ldi	r20, 0x01	; 1
+ 132:	4d a9       	sts	0x4d, r20	; 0x80004d <device_0_status>
+ 134:	0a c0       	rjmp	.+20     	; 0x14a <__vector_2+0x3e>
+ 136:	42 a1       	lds	r20, 0x42	; 0x800042 <counter_val_0>
+ 138:	53 a1       	lds	r21, 0x43	; 0x800043 <counter_val_0+0x1>
+ 13a:	45 36       	cpi	r20, 0x65	; 101
+ 13c:	51 07       	cpc	r21, r17
+ 13e:	28 f0       	brcs	.+10     	; 0x14a <__vector_2+0x3e>
+ 140:	42 e0       	ldi	r20, 0x02	; 2
+ 142:	4d a9       	sts	0x4d, r20	; 0x80004d <device_0_status>
+ 144:	02 c0       	rjmp	.+4      	; 0x14a <__vector_2+0x3e>
+ 146:	11 ab       	sts	0x51, r17	; 0x800051 <timer_count_0+0x1>
+ 148:	10 ab       	sts	0x50, r17	; 0x800050 <timer_count_0>
+ 14a:	01 9b       	sbis	0x00, 1	; 0
+ 14c:	16 c0       	rjmp	.+44     	; 0x17a <__vector_2+0x6e>
+ 14e:	4c a1       	lds	r20, 0x4c	; 0x80004c <device_1_status>
+ 150:	41 30       	cpi	r20, 0x01	; 1
+ 152:	49 f0       	breq	.+18     	; 0x166 <__vector_2+0x5a>
+ 154:	18 f0       	brcs	.+6      	; 0x15c <__vector_2+0x50>
+ 156:	42 30       	cpi	r20, 0x02	; 2
+ 158:	71 f0       	breq	.+28     	; 0x176 <__vector_2+0x6a>
+ 15a:	0f c0       	rjmp	.+30     	; 0x17a <__vector_2+0x6e>
+ 15c:	11 a9       	sts	0x41, r17	; 0x800041 <__DATA_REGION_ORIGIN__+0x1>
+ 15e:	10 a9       	sts	0x40, r17	; 0x800040 <__DATA_REGION_ORIGIN__>
+ 160:	41 e0       	ldi	r20, 0x01	; 1
+ 162:	4c a9       	sts	0x4c, r20	; 0x80004c <device_1_status>
+ 164:	0a c0       	rjmp	.+20     	; 0x17a <__vector_2+0x6e>
+ 166:	40 a1       	lds	r20, 0x40	; 0x800040 <__DATA_REGION_ORIGIN__>
+ 168:	51 a1       	lds	r21, 0x41	; 0x800041 <__DATA_REGION_ORIGIN__+0x1>
+ 16a:	45 36       	cpi	r20, 0x65	; 101
+ 16c:	51 07       	cpc	r21, r17
+ 16e:	28 f0       	brcs	.+10     	; 0x17a <__vector_2+0x6e>
+ 170:	42 e0       	ldi	r20, 0x02	; 2
+ 172:	4c a9       	sts	0x4c, r20	; 0x80004c <device_1_status>
+ 174:	02 c0       	rjmp	.+4      	; 0x17a <__vector_2+0x6e>
+ 176:	1f a9       	sts	0x4f, r17	; 0x80004f <timer_count_1+0x1>
+ 178:	1e a9       	sts	0x4e, r17	; 0x80004e <timer_count_1>
+ 17a:	5f 91       	pop	r21
+ 17c:	4f 91       	pop	r20
+ 17e:	0f 91       	pop	r16
+ 180:	0f bf       	out	0x3f, r16	; 63
+ 182:	0f 91       	pop	r16
+ 184:	1f 91       	pop	r17
+ 186:	18 95       	reti
+
+00000188 <set_pin>:
+ 188:	66 23       	and	r22, r22
+ 18a:	59 f0       	breq	.+22     	; 0x1a2 <set_pin+0x1a>
+ 18c:	62 b1       	in	r22, 0x02	; 2
+ 18e:	41 e0       	ldi	r20, 0x01	; 1
+ 190:	50 e0       	ldi	r21, 0x00	; 0
+ 192:	02 c0       	rjmp	.+4      	; 0x198 <set_pin+0x10>
+ 194:	44 0f       	add	r20, r20
+ 196:	55 1f       	adc	r21, r21
+ 198:	8a 95       	dec	r24
+ 19a:	e2 f7       	brpl	.-8      	; 0x194 <set_pin+0xc>
+ 19c:	46 2b       	or	r20, r22
+ 19e:	42 b9       	out	0x02, r20	; 2
+ 1a0:	08 95       	ret
+ 1a2:	62 b1       	in	r22, 0x02	; 2
+ 1a4:	41 e0       	ldi	r20, 0x01	; 1
+ 1a6:	50 e0       	ldi	r21, 0x00	; 0
+ 1a8:	02 c0       	rjmp	.+4      	; 0x1ae <set_pin+0x26>
+ 1aa:	44 0f       	add	r20, r20
+ 1ac:	55 1f       	adc	r21, r21
+ 1ae:	8a 95       	dec	r24
+ 1b0:	e2 f7       	brpl	.-8      	; 0x1aa <set_pin+0x22>
+ 1b2:	40 95       	com	r20
+ 1b4:	46 23       	and	r20, r22
+ 1b6:	42 b9       	out	0x02, r20	; 2
+ 1b8:	08 95       	ret
+
+000001ba <init_pins>:
+ 1ba:	41 b1       	in	r20, 0x01	; 1
+ 1bc:	44 60       	ori	r20, 0x04	; 4
+ 1be:	41 b9       	out	0x01, r20	; 1
+ 1c0:	41 b1       	in	r20, 0x01	; 1
+ 1c2:	48 60       	ori	r20, 0x08	; 8
+ 1c4:	41 b9       	out	0x01, r20	; 1
+ 1c6:	41 b1       	in	r20, 0x01	; 1
+ 1c8:	4e 7f       	andi	r20, 0xFE	; 254
+ 1ca:	41 b9       	out	0x01, r20	; 1
+ 1cc:	41 b1       	in	r20, 0x01	; 1
+ 1ce:	4d 7f       	andi	r20, 0xFD	; 253
+ 1d0:	41 b9       	out	0x01, r20	; 1
+ 1d2:	42 b1       	in	r20, 0x02	; 2
+ 1d4:	41 60       	ori	r20, 0x01	; 1
+ 1d6:	42 b9       	out	0x02, r20	; 2
+ 1d8:	42 b1       	in	r20, 0x02	; 2
+ 1da:	42 60       	ori	r20, 0x02	; 2
+ 1dc:	42 b9       	out	0x02, r20	; 2
+ 1de:	60 e0       	ldi	r22, 0x00	; 0
+ 1e0:	82 e0       	ldi	r24, 0x02	; 2
+ 1e2:	d2 df       	rcall	.-92     	; 0x188 <set_pin>
+ 1e4:	60 e0       	ldi	r22, 0x00	; 0
+ 1e6:	83 e0       	ldi	r24, 0x03	; 3
+ 1e8:	cf df       	rcall	.-98     	; 0x188 <set_pin>
+ 1ea:	08 95       	ret
+
+000001ec <init_timer>:
+ 1ec:	1e bd       	out	0x2e, r17	; 46
+ 1ee:	4d b5       	in	r20, 0x2d	; 45
+ 1f0:	48 60       	ori	r20, 0x08	; 8
+ 1f2:	4d bd       	out	0x2d, r20	; 45
+ 1f4:	4d b5       	in	r20, 0x2d	; 45
+ 1f6:	45 60       	ori	r20, 0x05	; 5
+ 1f8:	4d bd       	out	0x2d, r20	; 45
+ 1fa:	17 bd       	out	0x27, r17	; 39
+ 1fc:	4e e4       	ldi	r20, 0x4E	; 78
+ 1fe:	46 bd       	out	0x26, r20	; 38
+ 200:	4b b5       	in	r20, 0x2b	; 43
+ 202:	42 60       	ori	r20, 0x02	; 2
+ 204:	4b bd       	out	0x2b, r20	; 43
+ 206:	78 94       	sei
+ 208:	08 95       	ret
+
+0000020a <init_pcint>:
 }
-  9c:	6f 91       	pop	r22
-  9e:	5f 91       	pop	r21
-  a0:	4f 91       	pop	r20
-  a2:	0f 91       	pop	r16
-  a4:	0f bf       	out	0x3f, r16	; 63
-  a6:	0f 91       	pop	r16
-  a8:	1f 91       	pop	r17
-  aa:	18 95       	reti
 
-000000ac <set_pin>:
-    }
-}
+// initialize interrupt for pins
+void init_pcint(){
+	PCICR |= (1 << PCIE0);
+ 20a:	42 b3       	in	r20, 0x12	; 18
+ 20c:	41 60       	ori	r20, 0x01	; 1
+ 20e:	42 bb       	out	0x12, r20	; 18
+	PCMSK |= (1 << PCINT0);
+ 210:	40 b3       	in	r20, 0x10	; 16
+ 212:	41 60       	ori	r20, 0x01	; 1
+ 214:	40 bb       	out	0x10, r20	; 16
+	PCMSK |= (1 << PCINT1);
+ 216:	40 b3       	in	r20, 0x10	; 16
+ 218:	42 60       	ori	r20, 0x02	; 2
+ 21a:	40 bb       	out	0x10, r20	; 16
+ 21c:	08 95       	ret
 
-void set_pin(uint8_t pin, uint8_t state){
-	
-	if(state){
-  ac:	66 23       	and	r22, r22
-  ae:	59 f0       	breq	.+22     	; 0xc6 <set_pin+0x1a>
-		PORTB |= (1 << pin);
-  b0:	62 b1       	in	r22, 0x02	; 2
-  b2:	41 e0       	ldi	r20, 0x01	; 1
-  b4:	50 e0       	ldi	r21, 0x00	; 0
-  b6:	02 c0       	rjmp	.+4      	; 0xbc <set_pin+0x10>
-  b8:	44 0f       	add	r20, r20
-  ba:	55 1f       	adc	r21, r21
-  bc:	8a 95       	dec	r24
-  be:	e2 f7       	brpl	.-8      	; 0xb8 <set_pin+0xc>
-  c0:	46 2b       	or	r20, r22
-  c2:	42 b9       	out	0x02, r20	; 2
-  c4:	08 95       	ret
-	}
-	else{
-		PORTB &= ~(1 << pin);
-  c6:	62 b1       	in	r22, 0x02	; 2
-  c8:	41 e0       	ldi	r20, 0x01	; 1
-  ca:	50 e0       	ldi	r21, 0x00	; 0
-  cc:	02 c0       	rjmp	.+4      	; 0xd2 <set_pin+0x26>
-  ce:	44 0f       	add	r20, r20
-  d0:	55 1f       	adc	r21, r21
-  d2:	8a 95       	dec	r24
-  d4:	e2 f7       	brpl	.-8      	; 0xce <set_pin+0x22>
-  d6:	40 95       	com	r20
-  d8:	46 23       	and	r20, r22
-  da:	42 b9       	out	0x02, r20	; 2
-  dc:	08 95       	ret
-
-000000de <init_pins>:
-	}
-}
-
-void init_pins(){
-	
-	DDRB = 0b00001100;				// PB3 and PB2 set to output, PB1 and PB0 set to input
-  de:	4c e0       	ldi	r20, 0x0C	; 12
-  e0:	41 b9       	out	0x01, r20	; 1
-	PUEB = 0b00000011;				// PB0 and PB1 pull-up enabled
-  e2:	43 e0       	ldi	r20, 0x03	; 3
-  e4:	43 b9       	out	0x03, r20	; 3
-	set_pin(PINB2, 0);
-  e6:	60 e0       	ldi	r22, 0x00	; 0
-  e8:	82 e0       	ldi	r24, 0x02	; 2
-  ea:	e0 df       	rcall	.-64     	; 0xac <set_pin>
-	set_pin(PINB3, 0);
-  ec:	60 e0       	ldi	r22, 0x00	; 0
-  ee:	83 e0       	ldi	r24, 0x03	; 3
-  f0:	dd df       	rcall	.-70     	; 0xac <set_pin>
-  f2:	08 95       	ret
-
-000000f4 <init_timer>:
-}
-
-void init_timer(){
-	
-	TCCR0A = 0b00000000;
-  f4:	1e bd       	out	0x2e, r17	; 46
-	switch(WAVEFORM_GENERATION_MODE){
-		case WAVEFORM_GENERATION_MODE_NORMAL:
-			TCCR0B |= 0b00000000;
-			break;
-		case WAVEFORM_GENERATION_MODE_CTC:
-			TCCR0B |= 0b00001000;
-  f6:	4d b5       	in	r20, 0x2d	; 45
-  f8:	48 60       	ori	r20, 0x08	; 8
-  fa:	4d bd       	out	0x2d, r20	; 45
-			break;
-		case CLOCK_SELECT_BIT_PRESCALE_256:
-			TCCR0B |= 0b00000100;
-			break;
-		case CLOCK_SELECT_BIT_PRESCALE_1024:
-			TCCR0B |= 0b00000101;
-  fc:	4d b5       	in	r20, 0x2d	; 45
-  fe:	45 60       	ori	r20, 0x05	; 5
- 100:	4d bd       	out	0x2d, r20	; 45
-			break;
-		default:
-			TCCR0B |= 0b00000000;
-	}
-	
-	OCR0AH = OUTPUT_COMPARE_REGISTER_0_A >> 8;
- 102:	17 bd       	out	0x27, r17	; 39
-	OCR0AL = OUTPUT_COMPARE_REGISTER_0_A & 0xFF;
- 104:	47 e0       	ldi	r20, 0x07	; 7
- 106:	46 bd       	out	0x26, r20	; 38
-		
-	TIMSK0 |= (1 << OCIE0A);		// set interrupt for timer
- 108:	4b b5       	in	r20, 0x2b	; 43
- 10a:	42 60       	ori	r20, 0x02	; 2
- 10c:	4b bd       	out	0x2b, r20	; 43
-		
-	sei();							// enable interrupts
- 10e:	78 94       	sei
- 110:	08 95       	ret
-
-00000112 <main>:
+0000021e <main>:
 	}
 }
 
 int main(void)
 {
 	CCP = 0xD8;						// unlock protected registers
- 112:	48 ed       	ldi	r20, 0xD8	; 216
- 114:	4c bf       	out	0x3c, r20	; 60
+ 21e:	48 ed       	ldi	r20, 0xD8	; 216
+ 220:	4c bf       	out	0x3c, r20	; 60
 	CLKPSR = 0;						// no divider = 8MHz
- 116:	16 bf       	out	0x36, r17	; 54
+ 222:	16 bf       	out	0x36, r17	; 54
 
 	init_pins();
- 118:	e2 df       	rcall	.-60     	; 0xde <init_pins>
+ 224:	ca df       	rcall	.-108    	; 0x1ba <init_pins>
 	init_timer();
- 11a:	ec df       	rcall	.-40     	; 0xf4 <init_timer>
+ 226:	e2 df       	rcall	.-60     	; 0x1ec <init_timer>
+	init_pcint();
+ 228:	f0 df       	rcall	.-32     	; 0x20a <init_pcint>
 	
-    while (1) 
+	// main loop
+    while (1)
     {
-		if(PINB & PINB0){	// PB0 pulled high
- 11c:	40 b1       	in	r20, 0x00	; 0
-				device_0_active = 1;
-			}
-			timer_count_0 = 0;
-		}
-		
-		if(PINB & PINB1){	// PB1 pulled high
- 11e:	00 9b       	sbis	0x00, 0	; 0
- 120:	07 c0       	rjmp	.+14     	; 0x130 <main+0x1e>
-			if(!device_1_active){
- 122:	44 a1       	lds	r20, 0x44	; 0x800044 <device_1_active>
- 124:	41 13       	cpse	r20, r17
- 126:	02 c0       	rjmp	.+4      	; 0x12c <main+0x1a>
-				device_1_active = 1;
- 128:	41 e0       	ldi	r20, 0x01	; 1
- 12a:	44 a9       	sts	0x44, r20	; 0x800044 <device_1_active>
-			}
-			timer_count_1 = 0;
- 12c:	17 a9       	sts	0x47, r17	; 0x800047 <timer_count_1+0x1>
- 12e:	16 a9       	sts	0x46, r17	; 0x800046 <timer_count_1>
-		}
-		
-		if(counter_set_2 > 0){
- 130:	42 a1       	lds	r20, 0x42	; 0x800042 <counter_set_2>
- 132:	53 a1       	lds	r21, 0x43	; 0x800043 <counter_set_2+0x1>
- 134:	14 17       	cp	r17, r20
- 136:	15 07       	cpc	r17, r21
- 138:	7c f4       	brge	.+30     	; 0x158 <main+0x46>
-			if(counter_set_2 == COUNTER_SET_MAX){
- 13a:	42 a1       	lds	r20, 0x42	; 0x800042 <counter_set_2>
- 13c:	53 a1       	lds	r21, 0x43	; 0x800043 <counter_set_2+0x1>
- 13e:	40 31       	cpi	r20, 0x10	; 16
- 140:	57 42       	sbci	r21, 0x27	; 39
- 142:	19 f4       	brne	.+6      	; 0x14a <main+0x38>
+		// if output should be set high, set it (only when the value is the max value, so it was just set recently
+		if(counter_device_2 > 0){
+ 22a:	48 a1       	lds	r20, 0x48	; 0x800048 <counter_device_2>
+ 22c:	59 a1       	lds	r21, 0x49	; 0x800049 <counter_device_2+0x1>
+ 22e:	6a a1       	lds	r22, 0x4a	; 0x80004a <counter_device_2+0x2>
+ 230:	7b a1       	lds	r23, 0x4b	; 0x80004b <counter_device_2+0x3>
+ 232:	14 17       	cp	r17, r20
+ 234:	15 07       	cpc	r17, r21
+ 236:	16 07       	cpc	r17, r22
+ 238:	17 07       	cpc	r17, r23
+ 23a:	cc f4       	brge	.+50     	; 0x26e <main+0x50>
+			if(counter_device_2 == HIGH_OUT_COUNTER_MAX){
+ 23c:	48 a1       	lds	r20, 0x48	; 0x800048 <counter_device_2>
+ 23e:	59 a1       	lds	r21, 0x49	; 0x800049 <counter_device_2+0x1>
+ 240:	6a a1       	lds	r22, 0x4a	; 0x80004a <counter_device_2+0x2>
+ 242:	7b a1       	lds	r23, 0x4b	; 0x80004b <counter_device_2+0x3>
+ 244:	40 35       	cpi	r20, 0x50	; 80
+ 246:	53 4c       	sbci	r21, 0xC3	; 195
+ 248:	61 07       	cpc	r22, r17
+ 24a:	71 07       	cpc	r23, r17
+ 24c:	19 f4       	brne	.+6      	; 0x254 <main+0x36>
 				set_pin(PINB2, 1);
- 144:	61 e0       	ldi	r22, 0x01	; 1
- 146:	82 e0       	ldi	r24, 0x02	; 2
- 148:	b1 df       	rcall	.-158    	; 0xac <set_pin>
+ 24e:	61 e0       	ldi	r22, 0x01	; 1
+ 250:	82 e0       	ldi	r24, 0x02	; 2
+ 252:	9a df       	rcall	.-204    	; 0x188 <set_pin>
 			}
-			counter_set_2--;
- 14a:	42 a1       	lds	r20, 0x42	; 0x800042 <counter_set_2>
- 14c:	53 a1       	lds	r21, 0x43	; 0x800043 <counter_set_2+0x1>
- 14e:	41 50       	subi	r20, 0x01	; 1
- 150:	51 0b       	sbc	r21, r17
- 152:	53 a9       	sts	0x43, r21	; 0x800043 <counter_set_2+0x1>
- 154:	42 a9       	sts	0x42, r20	; 0x800042 <counter_set_2>
- 156:	0d c0       	rjmp	.+26     	; 0x172 <main+0x60>
+			counter_device_2--;
+ 254:	48 a1       	lds	r20, 0x48	; 0x800048 <counter_device_2>
+ 256:	59 a1       	lds	r21, 0x49	; 0x800049 <counter_device_2+0x1>
+ 258:	6a a1       	lds	r22, 0x4a	; 0x80004a <counter_device_2+0x2>
+ 25a:	7b a1       	lds	r23, 0x4b	; 0x80004b <counter_device_2+0x3>
+ 25c:	41 50       	subi	r20, 0x01	; 1
+ 25e:	51 0b       	sbc	r21, r17
+ 260:	61 0b       	sbc	r22, r17
+ 262:	71 0b       	sbc	r23, r17
+ 264:	48 a9       	sts	0x48, r20	; 0x800048 <counter_device_2>
+ 266:	59 a9       	sts	0x49, r21	; 0x800049 <counter_device_2+0x1>
+ 268:	6a a9       	sts	0x4a, r22	; 0x80004a <counter_device_2+0x2>
+ 26a:	7b a9       	sts	0x4b, r23	; 0x80004b <counter_device_2+0x3>
+ 26c:	17 c0       	rjmp	.+46     	; 0x29c <main+0x7e>
 		}
-		else if(counter_set_2 == 0){
- 158:	42 a1       	lds	r20, 0x42	; 0x800042 <counter_set_2>
- 15a:	53 a1       	lds	r21, 0x43	; 0x800043 <counter_set_2+0x1>
- 15c:	45 2b       	or	r20, r21
- 15e:	49 f4       	brne	.+18     	; 0x172 <main+0x60>
+		// if we keeped in high for long enough, set back to low, decrease one more, so it doesn't come to this state again
+		else if(counter_device_2 == 0){
+ 26e:	48 a1       	lds	r20, 0x48	; 0x800048 <counter_device_2>
+ 270:	59 a1       	lds	r21, 0x49	; 0x800049 <counter_device_2+0x1>
+ 272:	6a a1       	lds	r22, 0x4a	; 0x80004a <counter_device_2+0x2>
+ 274:	7b a1       	lds	r23, 0x4b	; 0x80004b <counter_device_2+0x3>
+ 276:	45 2b       	or	r20, r21
+ 278:	46 2b       	or	r20, r22
+ 27a:	47 2b       	or	r20, r23
+ 27c:	79 f4       	brne	.+30     	; 0x29c <main+0x7e>
 			set_pin(PINB2, 0);
- 160:	60 e0       	ldi	r22, 0x00	; 0
- 162:	82 e0       	ldi	r24, 0x02	; 2
- 164:	a3 df       	rcall	.-186    	; 0xac <set_pin>
-			counter_set_2--;
- 166:	42 a1       	lds	r20, 0x42	; 0x800042 <counter_set_2>
- 168:	53 a1       	lds	r21, 0x43	; 0x800043 <counter_set_2+0x1>
- 16a:	41 50       	subi	r20, 0x01	; 1
- 16c:	51 0b       	sbc	r21, r17
- 16e:	53 a9       	sts	0x43, r21	; 0x800043 <counter_set_2+0x1>
- 170:	42 a9       	sts	0x42, r20	; 0x800042 <counter_set_2>
+ 27e:	60 e0       	ldi	r22, 0x00	; 0
+ 280:	82 e0       	ldi	r24, 0x02	; 2
+ 282:	82 df       	rcall	.-252    	; 0x188 <set_pin>
+			counter_device_2--;
+ 284:	48 a1       	lds	r20, 0x48	; 0x800048 <counter_device_2>
+ 286:	59 a1       	lds	r21, 0x49	; 0x800049 <counter_device_2+0x1>
+ 288:	6a a1       	lds	r22, 0x4a	; 0x80004a <counter_device_2+0x2>
+ 28a:	7b a1       	lds	r23, 0x4b	; 0x80004b <counter_device_2+0x3>
+ 28c:	41 50       	subi	r20, 0x01	; 1
+ 28e:	51 0b       	sbc	r21, r17
+ 290:	61 0b       	sbc	r22, r17
+ 292:	71 0b       	sbc	r23, r17
+ 294:	48 a9       	sts	0x48, r20	; 0x800048 <counter_device_2>
+ 296:	59 a9       	sts	0x49, r21	; 0x800049 <counter_device_2+0x1>
+ 298:	6a a9       	sts	0x4a, r22	; 0x80004a <counter_device_2+0x2>
+ 29a:	7b a9       	sts	0x4b, r23	; 0x80004b <counter_device_2+0x3>
+			
 		}
 	
-		if(counter_set_3 > 0){
- 172:	40 a1       	lds	r20, 0x40	; 0x800040 <__DATA_REGION_ORIGIN__>
- 174:	51 a1       	lds	r21, 0x41	; 0x800041 <__DATA_REGION_ORIGIN__+0x1>
- 176:	14 17       	cp	r17, r20
- 178:	15 07       	cpc	r17, r21
- 17a:	7c f4       	brge	.+30     	; 0x19a <main+0x88>
-			if(counter_set_3 == COUNTER_SET_MAX){
- 17c:	40 a1       	lds	r20, 0x40	; 0x800040 <__DATA_REGION_ORIGIN__>
- 17e:	51 a1       	lds	r21, 0x41	; 0x800041 <__DATA_REGION_ORIGIN__+0x1>
- 180:	40 31       	cpi	r20, 0x10	; 16
- 182:	57 42       	sbci	r21, 0x27	; 39
- 184:	19 f4       	brne	.+6      	; 0x18c <main+0x7a>
+		if(counter_device_3 > 0){
+ 29c:	44 a1       	lds	r20, 0x44	; 0x800044 <counter_device_3>
+ 29e:	55 a1       	lds	r21, 0x45	; 0x800045 <counter_device_3+0x1>
+ 2a0:	66 a1       	lds	r22, 0x46	; 0x800046 <counter_device_3+0x2>
+ 2a2:	77 a1       	lds	r23, 0x47	; 0x800047 <counter_device_3+0x3>
+ 2a4:	14 17       	cp	r17, r20
+ 2a6:	15 07       	cpc	r17, r21
+ 2a8:	16 07       	cpc	r17, r22
+ 2aa:	17 07       	cpc	r17, r23
+ 2ac:	cc f4       	brge	.+50     	; 0x2e0 <main+0xc2>
+			if(counter_device_3 == HIGH_OUT_COUNTER_MAX){
+ 2ae:	44 a1       	lds	r20, 0x44	; 0x800044 <counter_device_3>
+ 2b0:	55 a1       	lds	r21, 0x45	; 0x800045 <counter_device_3+0x1>
+ 2b2:	66 a1       	lds	r22, 0x46	; 0x800046 <counter_device_3+0x2>
+ 2b4:	77 a1       	lds	r23, 0x47	; 0x800047 <counter_device_3+0x3>
+ 2b6:	40 35       	cpi	r20, 0x50	; 80
+ 2b8:	53 4c       	sbci	r21, 0xC3	; 195
+ 2ba:	61 07       	cpc	r22, r17
+ 2bc:	71 07       	cpc	r23, r17
+ 2be:	19 f4       	brne	.+6      	; 0x2c6 <main+0xa8>
 				set_pin(PINB3, 1);
- 186:	61 e0       	ldi	r22, 0x01	; 1
- 188:	83 e0       	ldi	r24, 0x03	; 3
- 18a:	90 df       	rcall	.-224    	; 0xac <set_pin>
+ 2c0:	61 e0       	ldi	r22, 0x01	; 1
+ 2c2:	83 e0       	ldi	r24, 0x03	; 3
+ 2c4:	61 df       	rcall	.-318    	; 0x188 <set_pin>
 			}
-			counter_set_3--;
- 18c:	40 a1       	lds	r20, 0x40	; 0x800040 <__DATA_REGION_ORIGIN__>
- 18e:	51 a1       	lds	r21, 0x41	; 0x800041 <__DATA_REGION_ORIGIN__+0x1>
- 190:	41 50       	subi	r20, 0x01	; 1
- 192:	51 0b       	sbc	r21, r17
- 194:	51 a9       	sts	0x41, r21	; 0x800041 <__DATA_REGION_ORIGIN__+0x1>
- 196:	40 a9       	sts	0x40, r20	; 0x800040 <__DATA_REGION_ORIGIN__>
- 198:	0d c0       	rjmp	.+26     	; 0x1b4 <main+0xa2>
+			counter_device_3--;
+ 2c6:	44 a1       	lds	r20, 0x44	; 0x800044 <counter_device_3>
+ 2c8:	55 a1       	lds	r21, 0x45	; 0x800045 <counter_device_3+0x1>
+ 2ca:	66 a1       	lds	r22, 0x46	; 0x800046 <counter_device_3+0x2>
+ 2cc:	77 a1       	lds	r23, 0x47	; 0x800047 <counter_device_3+0x3>
+ 2ce:	41 50       	subi	r20, 0x01	; 1
+ 2d0:	51 0b       	sbc	r21, r17
+ 2d2:	61 0b       	sbc	r22, r17
+ 2d4:	71 0b       	sbc	r23, r17
+ 2d6:	44 a9       	sts	0x44, r20	; 0x800044 <counter_device_3>
+ 2d8:	55 a9       	sts	0x45, r21	; 0x800045 <counter_device_3+0x1>
+ 2da:	66 a9       	sts	0x46, r22	; 0x800046 <counter_device_3+0x2>
+ 2dc:	77 a9       	sts	0x47, r23	; 0x800047 <counter_device_3+0x3>
+ 2de:	17 c0       	rjmp	.+46     	; 0x30e <main+0xf0>
 		}
-		else if(counter_set_3 == 0){
- 19a:	40 a1       	lds	r20, 0x40	; 0x800040 <__DATA_REGION_ORIGIN__>
- 19c:	51 a1       	lds	r21, 0x41	; 0x800041 <__DATA_REGION_ORIGIN__+0x1>
- 19e:	45 2b       	or	r20, r21
- 1a0:	49 f4       	brne	.+18     	; 0x1b4 <main+0xa2>
+		else if(counter_device_3 == 0){
+ 2e0:	44 a1       	lds	r20, 0x44	; 0x800044 <counter_device_3>
+ 2e2:	55 a1       	lds	r21, 0x45	; 0x800045 <counter_device_3+0x1>
+ 2e4:	66 a1       	lds	r22, 0x46	; 0x800046 <counter_device_3+0x2>
+ 2e6:	77 a1       	lds	r23, 0x47	; 0x800047 <counter_device_3+0x3>
+ 2e8:	45 2b       	or	r20, r21
+ 2ea:	46 2b       	or	r20, r22
+ 2ec:	47 2b       	or	r20, r23
+ 2ee:	79 f4       	brne	.+30     	; 0x30e <main+0xf0>
 			set_pin(PINB3, 0);
- 1a2:	60 e0       	ldi	r22, 0x00	; 0
- 1a4:	83 e0       	ldi	r24, 0x03	; 3
- 1a6:	82 df       	rcall	.-252    	; 0xac <set_pin>
-			counter_set_3--;
- 1a8:	40 a1       	lds	r20, 0x40	; 0x800040 <__DATA_REGION_ORIGIN__>
- 1aa:	51 a1       	lds	r21, 0x41	; 0x800041 <__DATA_REGION_ORIGIN__+0x1>
- 1ac:	41 50       	subi	r20, 0x01	; 1
- 1ae:	51 0b       	sbc	r21, r17
- 1b0:	51 a9       	sts	0x41, r21	; 0x800041 <__DATA_REGION_ORIGIN__+0x1>
- 1b2:	40 a9       	sts	0x40, r20	; 0x800040 <__DATA_REGION_ORIGIN__>
+ 2f0:	60 e0       	ldi	r22, 0x00	; 0
+ 2f2:	83 e0       	ldi	r24, 0x03	; 3
+ 2f4:	49 df       	rcall	.-366    	; 0x188 <set_pin>
+			counter_device_3--;
+ 2f6:	44 a1       	lds	r20, 0x44	; 0x800044 <counter_device_3>
+ 2f8:	55 a1       	lds	r21, 0x45	; 0x800045 <counter_device_3+0x1>
+ 2fa:	66 a1       	lds	r22, 0x46	; 0x800046 <counter_device_3+0x2>
+ 2fc:	77 a1       	lds	r23, 0x47	; 0x800047 <counter_device_3+0x3>
+ 2fe:	41 50       	subi	r20, 0x01	; 1
+ 300:	51 0b       	sbc	r21, r17
+ 302:	61 0b       	sbc	r22, r17
+ 304:	71 0b       	sbc	r23, r17
+ 306:	44 a9       	sts	0x44, r20	; 0x800044 <counter_device_3>
+ 308:	55 a9       	sts	0x45, r21	; 0x800045 <counter_device_3+0x1>
+ 30a:	66 a9       	sts	0x46, r22	; 0x800046 <counter_device_3+0x2>
+ 30c:	77 a9       	sts	0x47, r23	; 0x800047 <counter_device_3+0x3>
 	#else
 		//round up by default
 		__ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
 	#endif
 
 	__builtin_avr_delay_cycles(__ticks_dc);
- 1b4:	47 ec       	ldi	r20, 0xC7	; 199
- 1b6:	50 e0       	ldi	r21, 0x00	; 0
- 1b8:	41 50       	subi	r20, 0x01	; 1
- 1ba:	50 40       	sbci	r21, 0x00	; 0
- 1bc:	e9 f7       	brne	.-6      	; 0x1b8 <main+0xa6>
- 1be:	00 c0       	rjmp	.+0      	; 0x1c0 <main+0xae>
- 1c0:	00 00       	nop
- 1c2:	ac cf       	rjmp	.-168    	; 0x11c <main+0xa>
+ 30e:	47 ec       	ldi	r20, 0xC7	; 199
+ 310:	50 e0       	ldi	r21, 0x00	; 0
+ 312:	41 50       	subi	r20, 0x01	; 1
+ 314:	50 40       	sbci	r21, 0x00	; 0
+ 316:	e9 f7       	brne	.-6      	; 0x312 <main+0xf4>
+ 318:	00 c0       	rjmp	.+0      	; 0x31a <main+0xfc>
+ 31a:	00 00       	nop
+ 31c:	86 cf       	rjmp	.-244    	; 0x22a <main+0xc>
 
-000001c4 <_exit>:
- 1c4:	f8 94       	cli
+0000031e <_exit>:
+ 31e:	f8 94       	cli
 
-000001c6 <__stop_program>:
- 1c6:	ff cf       	rjmp	.-2      	; 0x1c6 <__stop_program>
+00000320 <__stop_program>:
+ 320:	ff cf       	rjmp	.-2      	; 0x320 <__stop_program>
