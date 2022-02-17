@@ -1,6 +1,6 @@
-creator: Antal Ilyes
-date: January 2022 - February 2022
-This repository was made to contain the development files of a hardware watchdog project for SoftFlex kft.
+creator: Antal Ilyes\n
+date: January 2022 - February 2022\n
+This repository was made to contain the development files of a hardware watchdog project for SoftFlex kft.\n
 The hardware watchdog is made of a PCB and a program written in embedded C.
 The device is controlled by an ATTyin10 microcontroller. It periodically gets an "alive" tick from the devices connected to it. When an input is driven high, it also turns on a green LED (through an NPN transistor), to visualize it. There is also a red LED indicating the device is powered.
 There are two channels that the device can control, as there are only 4 pins on the ATTiny10.
